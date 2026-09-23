@@ -1,14 +1,27 @@
-document.addEventListener('DOMContentLoaded',setup)
+import {MiniMaple} from "./miniMaple.js"
+
+document.addEventListener('DOMContentLoaded', setup)
 
 function setup() {
-    document.getElementById('demoButton').onclick = addSomething;
+    document.getElementById('calcButton').onclick = calculateDerivative
 }
 
-function addSomething(){
-    const someDummyDiv = document.createElement('div');
-    someDummyDiv.classList.add('generated');
-    const count = document.getElementsByClassName('generated').length;
-    someDummyDiv.innerHTML = `I was created by JS! There are already ${count} of my friends!`;
-    const container = document.getElementById('container');
-    container.appendChild(someDummyDiv);
+function calculateDerivative() {
+    const inputField = document.getElementById('expressionInput')
+    const resultField = document.getElementById('resultOutput')
+    const errorAlert = document.getElementById('errorAlert')
+
+    resultField.value = ''
+    errorAlert.classList.add('d-none')
+    errorAlert.textContent = ''
+
+    const input = inputField.value
+
+    try {
+        const maple = new MiniMaple()
+        resultField.value = maple.diff(input)
+    } catch (error) {
+        errorAlert.textContent = error.message
+        errorAlert.classList.remove('d-none')
+    }
 }
