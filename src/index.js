@@ -1,4 +1,4 @@
-import {MiniMaple} from "./miniMaple.js"
+import { MiniMaple } from "./miniMaple.js"
 
 document.addEventListener('DOMContentLoaded', setup)
 
@@ -11,7 +11,7 @@ function calculateDerivative() {
     const resultField = document.getElementById('resultOutput')
     const errorAlert = document.getElementById('errorAlert')
 
-    resultField.value = ''
+    resultField.innerHTML = ''
     errorAlert.classList.add('d-none')
     errorAlert.textContent = ''
 
@@ -19,7 +19,15 @@ function calculateDerivative() {
 
     try {
         const maple = new MiniMaple()
-        resultField.value = maple.diff(input)
+        const latexResult = maple.diff(input)
+
+        resultField.innerHTML = `\\( ${latexResult} \\)`
+
+        if (window.MathJax) {
+            MathJax.typesetPromise([resultField]).catch(err => {
+                console.error("MathJax error: ", err)
+            })
+        }
     } catch (error) {
         errorAlert.textContent = error.message
         errorAlert.classList.remove('d-none')

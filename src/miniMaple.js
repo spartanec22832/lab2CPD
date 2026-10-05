@@ -1,100 +1,123 @@
-class MiniMaple{
-     diff(input) {
+class MathSymbol {
+    constructor(name) {
+        this.name = name
+    }
+}
+
+class MathNumber {
+    constructor(value) {
+        this.value = value
+    }
+}
+
+class Term {
+    constructor(k, s, p) {
+        this.k = k
+        this.s = s
+        this.p = p
+    }
+
+    diff(symName) {
+        if (this.s.name !== symName) {
+            return new MathNumber(0)
+        }
+
+        return new Term(this.k * this.p, this.s, this.p - 1)
+    }
+}
+
+class MiniMaple {
+    diff(input) {
         const parts = input.split(',')
         if (parts.length !== 2) {
             throw new Error("Неверный формат! Ожидается выражение вида: \"полином, переменная\"")
         }
 
-        let pol = parts[0].trim()
+        const exprStr = parts[0].replace(/\s+/g, '')
         const targetVar = parts[1].trim()
 
-         if (!/^[a-zA-Z]+$/.test(targetVar)) {
-             throw new Error("Неверный формат! Целевая переменная должна содержать только буквы")
-         }
+        if (!/^[a-zA-Z]+$/.test(targetVar)) {
+            throw new Error("Неверный формат! Целевая переменная должна содержать только буквы")
+        }
 
-        if (/[^a-zA-Z0-9\s+\-*^]/.test(pol)) {
+        if (/[^a-zA-Z0-9+\-*^]/.test(exprStr)) {
             throw new Error("Неверный ввод! Обнаружены недопустимые символы")
         }
 
-        pol = pol.replace(/\s+/g, '')
-        pol = pol.replace(/(?<!^)(?<!\+)-/g, '+-')
+        const termRegex = /[+-]?[^+-]+/g
+        const termsStr = exprStr.match(termRegex) || []
 
-        const variables = pol.split('+')
+        const expr = termsStr.map(t => {
+            const symMatch = t.match(/[a-zA-Z]+/)
 
-        const diffVars = variables.map(variable => {
-            if (!variable) return 0
-
-            let coeffStr = ''
-            let varName
-            let expStr
-            const letterMatch = variable.match(/[a-zA-Z]+/)
-
-            if (letterMatch) {
-                varName = letterMatch[0]
-
-                const parts = variable.split(varName)
-
-                if (parts.length > 2) {
-                    throw new Error(`Слагаемое не приведено к каноническому виду (дублирование переменной): ${variable}`)
-                }
-
-                if (parts[1] && !/^(\^\d+)?$/.test(parts[1])) {
-                    throw new Error(`Обнаружены смешанные переменные или неверный формат степени: ${variable}`)
-                }
-
-                coeffStr = parts[0].replace('*', '')
-
-                if (parts[1]) {
-                    expStr = parts[1].replace('^', '')
-                }
-            } else {
-                coeffStr = variable
+            if (!symMatch) {
+                return new MathNumber(parseInt(t, 10))
             }
 
-            if (varName !== targetVar) return 0
+            let k = 1
+            let p = 1
+            const sName = symMatch[0]
 
-            let coeff = 1
-            if (coeffStr === '-') coeff = -1
-            else if (coeffStr === '+') coeff = 1
-            else if (coeffStr !== '') coeff = parseInt(coeffStr, 10)
-
-            let power = expStr !== undefined ? parseInt(expStr, 10) : 1
-
-            const newCoeff = coeff * power
-            const newPower = power - 1
-
-            if (newCoeff === 0) return 0
-
-            if (newPower === 0) {
-                return newCoeff.toString()
+            const termParts = t.split(sName)
+            if (termParts.length > 2) {
+                throw new Error("Слагаемое не приведено к каноническому виду (дублирование переменной)")
+            }
+            if (termParts[1] && !/^(\^\d+)?$/.test(termParts[1])) {
+                throw new Error("Обнаружены смешанные переменные или неверный формат степени")
             }
 
-            let resStr = ''
-            if (newCoeff === -1) resStr = '-'
-            else if (newCoeff !== 1) resStr = `${newCoeff}*`
+            const coeffStr = termParts[0].replace('*', '')
+            if (coeffStr === '-') k = -1
+            else if (coeffStr === '+') k = 1
+            else if (coeffStr !== '') k = parseInt(coeffStr, 10)
 
-            resStr += varName
-            if (newPower > 1) resStr += `^${newPower}`
+            if (termParts[1]) {
+                p = parseInt(termParts[1].replace('^', ''), 10)
+            }
 
-            return resStr
+            return new Term(k, new MathSymbol(sName), p)
         })
 
-        const resArr = diffVars.filter(t => t !== 0)
+        const r = []
 
-        if (resArr.length === 0) return '0'
+        for (const t of expr) {
+            if (t instanceof MathNumber) {
+                continue
+            }
 
-        let result = resArr[0]
-        for (let i = 1; i < resArr.length; i++) {
-            const tmp = resArr[i]
-            if (tmp.startsWith('-')) {
-                result += ` - ${tmp.slice(1)}`
-            } else {
-                result += ` + ${tmp}`
+            const differentiatedTerm = t.diff(targetVar)
+
+            if (differentiatedTerm instanceof MathNumber && differentiatedTerm.value === 0) {
+                continue
+            }
+
+            if (differentiatedTerm.k !== 0) {
+                r.push(differentiatedTerm)
             }
         }
 
-        return result
+        if (r.length === 0) return '0'
+
+        return r.map((t, i) => {
+            let res = ''
+            const absK = Math.abs(t.k)
+
+            if (i > 0) {
+                res += t.k < 0 ? ' - ' : ' + '
+            } else if (t.k < 0) {
+                res += '-'
+            }
+
+            if (t.p === 0) {
+                res += absK
+            } else {
+                if (absK !== 1) res += absK
+                res += t.s.name
+                if (t.p > 1) res += `^{${t.p}}`
+            }
+            return res
+        }).join('')
     }
 }
 
-export {MiniMaple}
+export { MiniMaple, Term, MathNumber, MathSymbol }

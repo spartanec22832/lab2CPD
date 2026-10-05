@@ -1,4 +1,4 @@
-import { MiniMaple } from "../src/miniMaple"
+import { MiniMaple } from "../src/miniMaple.js"
 
 describe('MiniMaple', () => {
     let maple
@@ -8,7 +8,7 @@ describe('MiniMaple', () => {
     })
 
     test('дифференцирует стандартный одночлен', () => {
-        expect(maple.diff('4*x^3, x')).toBe('12*x^2')
+        expect(maple.diff('4*x^3, x')).toBe('12x^{2}')
     })
 
     test('возвращает 0, если дифференцирование идет по другой переменной', () => {
@@ -16,7 +16,7 @@ describe('MiniMaple', () => {
     })
 
     test('дифференцирует полином с вычитанием', () => {
-        expect(maple.diff('4*x^3-x^2, x')).toBe('12*x^2 - 2*x')
+        expect(maple.diff('4*x^3-x^2, x')).toBe('12x^{2} - 2x')
     })
 
     test('дифференцирует простое число (константу) в 0', () => {
@@ -28,15 +28,19 @@ describe('MiniMaple', () => {
     })
 
     test('корректно обрабатывает отрицательные слагаемые в начале', () => {
-        expect(maple.diff('-x^2 + 5*x, x')).toBe('-2*x + 5')
+        expect(maple.diff('-x^2 + 5*x, x')).toBe('-2x + 5')
     })
 
     test('игнорирует пробелы в выражении', () => {
-        expect(maple.diff(' 4 * x ^ 3 -   x     ^ 2 , x ')).toBe('12*x^2 - 2*x')
+        expect(maple.diff(' 4 * x ^ 3 -   x     ^ 2 , x ')).toBe('12x^{2} - 2x')
     })
 
     test('возвращает 0, если все слагаемые обнулились', () => {
         expect(maple.diff('5 + y, x')).toBe('0')
+    })
+
+    test('корректно отрабатывает составную переменную', () => {
+        expect(maple.diff('4*term^2, term')).toBe('8term')
     })
 
     test('выбрасывает ошибку, если формат не содержит запятую', () => {
